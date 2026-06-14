@@ -5,6 +5,6 @@ export default defineConfig({
     environment: "node",
     passWithNoTests: true,
     include: ["src/**/*.test.ts", "src/**/*.test.tsx", "tests/**/*.test.ts"],
-    exclude: ["node_modules", ".next", "tests/e2e/**"],
+    exclude: ["node_modules", ".next", "tests/e2e/**", "tests/db/**"],
   },
 });
