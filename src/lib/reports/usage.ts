@@ -14,6 +14,7 @@ export type ApiUsageStatus =
   | "blocked"
   | "outage"
   | "auth"
+  | "bounce"
   | "unknown";
 
 export type ApiUsageRecord = {
