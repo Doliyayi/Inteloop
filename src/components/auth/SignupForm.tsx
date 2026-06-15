@@ -12,7 +12,7 @@ export function SignupForm() {
     return (
       <div
         role="status"
-        className="rounded-md border border-green-200 bg-green-50 p-4 text-sm text-green-900"
+        className="alert-success"
       >
         Check your email to confirm your account.
       </div>
@@ -22,7 +22,7 @@ export function SignupForm() {
   return (
     <form action={formAction} className="space-y-4">
       <div>
-        <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+        <label htmlFor="email" className="field-label">
           Email
         </label>
         <input
@@ -31,11 +31,11 @@ export function SignupForm() {
           type="email"
           required
           autoComplete="email"
-          className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+          className="field-input"
         />
       </div>
       <div>
-        <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+        <label htmlFor="password" className="field-label">
           Password
         </label>
         <input
@@ -45,12 +45,12 @@ export function SignupForm() {
           required
           autoComplete="new-password"
           minLength={8}
-          className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+          className="field-input"
         />
-        <p className="mt-1 text-xs text-gray-500">At least 8 characters.</p>
+        <p className="field-hint">At least 8 characters.</p>
       </div>
       {state && !state.ok && (
-        <p role="alert" className="text-sm text-red-600">
+        <p role="alert" className="form-error">
           {state.error}
         </p>
       )}

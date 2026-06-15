@@ -11,7 +11,7 @@ export function UpdateEmailForm() {
   return (
     <form action={formAction} className="space-y-3">
       <div>
-        <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+        <label htmlFor="email" className="field-label">
           New email
         </label>
         <input
@@ -20,20 +20,20 @@ export function UpdateEmailForm() {
           type="email"
           required
           autoComplete="email"
-          className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+          className="field-input"
         />
-        <p className="mt-1 text-xs text-gray-500">
+        <p className="field-hint">
           We&apos;ll send a confirmation link to the new address. The change takes effect after you
           click it.
         </p>
       </div>
       {state?.ok && (
-        <p role="status" className="text-sm text-green-700">
+        <p role="status" className="text-sm font-medium text-emerald-700">
           Check your new email to confirm the change.
         </p>
       )}
       {state && !state.ok && (
-        <p role="alert" className="text-sm text-red-600">
+        <p role="alert" className="form-error">
           {state.error}
         </p>
       )}

@@ -13,25 +13,23 @@ export default async function SettingsPage() {
   // The dashboard layout guards against unauthenticated access; `user` is non-null here.
 
   return (
-    <div className="space-y-10">
-      <section>
-        <h1 className="text-xl font-semibold">Settings</h1>
-      </section>
+    <div className="space-y-8">
+      <h1 className="text-2xl font-semibold tracking-tight text-neutral-950">Settings</h1>
 
-      <section className="space-y-3 rounded-md border border-gray-200 bg-white p-6">
-        <h2 className="text-base font-semibold">Email</h2>
-        <p className="text-sm text-gray-500">Current: {user?.email}</p>
+      <section className="card space-y-3">
+        <h2 className="text-base font-semibold text-neutral-950">Email</h2>
+        <p className="text-sm text-neutral-500">Current: {user?.email}</p>
         <UpdateEmailForm />
       </section>
 
-      <section className="space-y-3 rounded-md border border-gray-200 bg-white p-6">
-        <h2 className="text-base font-semibold">Password</h2>
+      <section className="card space-y-3">
+        <h2 className="text-base font-semibold text-neutral-950">Password</h2>
         <UpdatePasswordSettingsForm />
       </section>
 
-      <section className="space-y-3 rounded-md border border-red-200 bg-white p-6">
-        <h2 className="text-base font-semibold text-red-700">Danger zone</h2>
-        <p className="text-sm text-gray-500">
+      <section className="card space-y-3 border-rose-200">
+        <h2 className="text-base font-semibold text-rose-700">Danger zone</h2>
+        <p className="text-sm text-neutral-500">
           Deleting your account anonymises your data and cancels any active subscription. This
           cannot be undone.
         </p>

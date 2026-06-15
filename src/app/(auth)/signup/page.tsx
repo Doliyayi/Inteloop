@@ -8,13 +8,15 @@ export default function SignupPage() {
   return (
     <div className="space-y-6">
       <div className="space-y-1">
-        <h1 className="text-lg font-semibold">Create your account</h1>
-        <p className="text-sm text-gray-500">Start your competitor intelligence trial.</p>
+        <h1 className="text-xl font-semibold tracking-tight text-neutral-950">
+          Create your account
+        </h1>
+        <p className="text-sm text-neutral-500">Start your competitor intelligence trial.</p>
       </div>
       <SignupForm />
-      <p className="text-sm text-gray-500">
+      <p className="text-sm text-neutral-500">
         Already have an account?{" "}
-        <Link href="/login" className="text-blue-600 underline">
+        <Link href="/login" className="link">
           Sign in
         </Link>
       </p>

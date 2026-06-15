@@ -15,7 +15,7 @@ export function ForgotPasswordForm() {
     return (
       <div
         role="status"
-        className="rounded-md border border-green-200 bg-green-50 p-4 text-sm text-green-900"
+        className="alert-success"
       >
         If that email is registered, you&apos;ll receive a reset link shortly.
       </div>
@@ -25,7 +25,7 @@ export function ForgotPasswordForm() {
   return (
     <form action={formAction} className="space-y-4">
       <div>
-        <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+        <label htmlFor="email" className="field-label">
           Email
         </label>
         <input
@@ -34,11 +34,11 @@ export function ForgotPasswordForm() {
           type="email"
           required
           autoComplete="email"
-          className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+          className="field-input"
         />
       </div>
       {state && !state.ok && (
-        <p role="alert" className="text-sm text-red-600">
+        <p role="alert" className="form-error">
           {state.error}
         </p>
       )}

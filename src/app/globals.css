@@ -1,3 +1,65 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* =========================================================
+   Inteloop design system — warm "vibrant" theme.
+   Shared primitives so every surface (auth, dashboard,
+   marketing) renders with the same rose/neutral palette,
+   rounded geometry, and serif display accents.
+   ========================================================= */
+
+@layer components {
+  /* Surfaces */
+  .card {
+    @apply rounded-2xl border border-neutral-200/70 bg-white p-6 shadow-sm;
+  }
+
+  /* Soft warm page background used behind app shells. */
+  .app-surface {
+    background:
+      radial-gradient(40% 35% at 85% 0%, rgba(244, 114, 182, 0.12), transparent 70%),
+      radial-gradient(35% 30% at 5% 0%, rgba(251, 146, 60, 0.1), transparent 70%), #fffaf5;
+  }
+
+  /* Forms */
+  .field-label {
+    @apply block text-sm font-medium text-neutral-700;
+  }
+  .field-input {
+    @apply mt-1 block w-full rounded-xl border border-neutral-300 bg-white px-3.5 py-2.5 text-sm shadow-sm outline-none transition placeholder:text-neutral-400 focus:border-rose-400 focus:ring-2 focus:ring-rose-200;
+  }
+  .field-hint {
+    @apply mt-1 text-xs text-neutral-500;
+  }
+  .form-error {
+    @apply text-sm font-medium text-rose-600;
+  }
+
+  /* Alerts */
+  .alert-success {
+    @apply rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-900;
+  }
+  .alert-info {
+    @apply rounded-xl border border-rose-200 bg-rose-50/70 p-4 text-sm text-rose-900;
+  }
+
+  /* Buttons */
+  .btn {
+    @apply inline-flex items-center justify-center rounded-full px-5 py-2.5 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-50;
+  }
+  .btn-primary {
+    @apply btn bg-neutral-900 text-white shadow-sm shadow-rose-500/10 hover:bg-neutral-700;
+  }
+  .btn-secondary {
+    @apply btn border border-neutral-300 bg-white text-neutral-800 hover:bg-neutral-50;
+  }
+  .btn-danger {
+    @apply btn border border-rose-300 bg-white text-rose-700 hover:bg-rose-50;
+  }
+
+  /* Links */
+  .link {
+    @apply font-medium text-rose-600 underline-offset-2 transition hover:text-rose-500 hover:underline;
+  }
+}

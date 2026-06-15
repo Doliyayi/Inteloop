@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
+import { DashboardNav } from "@/components/DashboardNav";
+import { Logo } from "@/components/Logo";
 import { logoutAction } from "@/lib/auth/actions";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
@@ -13,32 +15,24 @@ export default async function DashboardLayout({ children }: { children: React.Re
   if (!user) redirect("/login");
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="border-b border-gray-200 bg-white">
-        <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
-          <Link href="/dashboard" className="font-semibold">
-            Inteloop
+    <div className="app-surface min-h-screen">
+      <header className="sticky top-0 z-10 border-b border-neutral-200/70 bg-white/80 backdrop-blur">
+        <div className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-4 py-3">
+          <Link href="/dashboard">
+            <Logo />
           </Link>
-          <nav className="flex items-center gap-4 text-sm">
-            <Link href="/dashboard" className="text-gray-700 hover:text-black">
-              Reports
-            </Link>
-            <Link href="/dashboard/competitors" className="text-gray-700 hover:text-black">
-              Competitors
-            </Link>
-            <Link href="/dashboard/settings" className="text-gray-700 hover:text-black">
-              Settings
-            </Link>
-            <span className="text-gray-500">{user.email}</span>
+          <DashboardNav />
+          <div className="flex items-center gap-3">
+            <span className="hidden text-sm text-neutral-500 sm:block">{user.email}</span>
             <form action={logoutAction}>
-              <button type="submit" className="text-blue-600 underline">
+              <button type="submit" className="btn-secondary px-4 py-1.5">
                 Sign out
               </button>
             </form>
-          </nav>
+          </div>
         </div>
       </header>
-      <main className="mx-auto max-w-5xl px-4 py-8">{children}</main>
+      <main className="mx-auto max-w-5xl px-4 py-10">{children}</main>
     </div>
   );
 }

@@ -12,15 +12,15 @@ export default function LoginPage({ searchParams }: Props) {
   return (
     <div className="space-y-6">
       <div className="space-y-1">
-        <h1 className="text-lg font-semibold">Sign in</h1>
-        <p className="text-sm text-gray-500">Welcome back.</p>
+        <h1 className="text-xl font-semibold tracking-tight text-neutral-950">Welcome back</h1>
+        <p className="text-sm text-neutral-500">Sign in to your intelligence desk.</p>
       </div>
       <LoginForm next={searchParams?.next} />
-      <div className="flex items-center justify-between text-sm text-gray-500">
-        <Link href="/forgot-password" className="text-blue-600 underline">
+      <div className="flex items-center justify-between text-sm">
+        <Link href="/forgot-password" className="link">
           Forgot password?
         </Link>
-        <Link href="/signup" className="text-blue-600 underline">
+        <Link href="/signup" className="link">
           Create an account
         </Link>
       </div>

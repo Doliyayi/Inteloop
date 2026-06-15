@@ -103,12 +103,12 @@ export function CompetitorsManager({ initial, welcomeReportSent }: Props) {
   return (
     <div className="space-y-6">
       {showGeneratingBanner && (
-        <div className="rounded-md border border-green-200 bg-green-50 p-4 text-sm text-green-900">
+        <div className="alert-success">
           Your welcome report is being generated. Expect it in your inbox within 60 minutes.
         </div>
       )}
       {showEmptyBanner && (
-        <div className="rounded-md border border-blue-200 bg-blue-50 p-4 text-sm text-blue-900">
+        <div className="alert-info">
           Add your first competitor to receive your welcome report.
         </div>
       )}
@@ -122,7 +122,7 @@ export function CompetitorsManager({ initial, welcomeReportSent }: Props) {
               clearError();
               setForm({ mode: "add" });
             }}
-            className="rounded-md bg-black px-4 py-2 text-sm font-medium text-white"
+            className="btn-primary"
           >
             Add competitor
           </button>
@@ -132,10 +132,10 @@ export function CompetitorsManager({ initial, welcomeReportSent }: Props) {
       {form.mode !== "closed" && (
         <form
           action={handleSubmit}
-          className="space-y-4 rounded-md border border-gray-200 bg-white p-6"
+          className="card space-y-4"
         >
           <div>
-            <label htmlFor="name" className="block text-sm font-medium text-gray-700">
+            <label htmlFor="name" className="field-label">
               Competitor name
             </label>
             <input
@@ -146,11 +146,11 @@ export function CompetitorsManager({ initial, welcomeReportSent }: Props) {
               minLength={2}
               maxLength={100}
               defaultValue={form.mode === "edit" ? form.competitor.name : ""}
-              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+              className="field-input"
             />
           </div>
           <div>
-            <label htmlFor="website_url" className="block text-sm font-medium text-gray-700">
+            <label htmlFor="website_url" className="field-label">
               Website URL
             </label>
             <input
@@ -160,11 +160,11 @@ export function CompetitorsManager({ initial, welcomeReportSent }: Props) {
               required
               placeholder="https://"
               defaultValue={form.mode === "edit" ? form.competitor.website_url : ""}
-              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+              className="field-input"
             />
           </div>
           <div>
-            <label htmlFor="notes" className="block text-sm font-medium text-gray-700">
+            <label htmlFor="notes" className="field-label">
               Notes (optional)
             </label>
             <textarea
@@ -173,11 +173,11 @@ export function CompetitorsManager({ initial, welcomeReportSent }: Props) {
               maxLength={500}
               rows={3}
               defaultValue={form.mode === "edit" ? (form.competitor.notes ?? "") : ""}
-              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+              className="field-input"
             />
           </div>
           {error && (
-            <p role="alert" className="text-sm text-red-600">
+            <p role="alert" className="form-error">
               {error}
             </p>
           )}
@@ -185,7 +185,7 @@ export function CompetitorsManager({ initial, welcomeReportSent }: Props) {
             <button
               type="submit"
               disabled={pending}
-              className="rounded-md bg-black px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+              className="btn-primary"
             >
               {pending ? "Saving…" : form.mode === "edit" ? "Save" : "Add"}
             </button>
@@ -195,7 +195,7 @@ export function CompetitorsManager({ initial, welcomeReportSent }: Props) {
                 clearError();
                 setForm({ mode: "closed" });
               }}
-              className="rounded-md border border-gray-300 px-4 py-2 text-sm font-medium"
+              className="btn-secondary"
             >
               Cancel
             </button>
@@ -204,7 +204,7 @@ export function CompetitorsManager({ initial, welcomeReportSent }: Props) {
       )}
 
       {error && form.mode === "closed" && (
-        <p role="alert" className="text-sm text-red-600">
+        <p role="alert" className="form-error">
           {error}
         </p>
       )}
@@ -213,7 +213,7 @@ export function CompetitorsManager({ initial, welcomeReportSent }: Props) {
         {competitors.map((c) => (
           <li
             key={c.id}
-            className="flex items-start justify-between rounded-md border border-gray-200 bg-white p-4"
+            className="card flex items-start justify-between p-4"
           >
             <div className="space-y-1">
               <p className="font-medium">{c.name}</p>
@@ -221,11 +221,11 @@ export function CompetitorsManager({ initial, welcomeReportSent }: Props) {
                 href={c.website_url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-sm text-blue-600 underline"
+                className="link text-sm"
               >
                 {c.website_url}
               </a>
-              {c.notes && <p className="text-sm text-gray-500">{c.notes}</p>}
+              {c.notes && <p className="text-sm text-neutral-500">{c.notes}</p>}
             </div>
             <div className="flex gap-2 text-sm">
               <button
@@ -234,14 +234,14 @@ export function CompetitorsManager({ initial, welcomeReportSent }: Props) {
                   clearError();
                   setForm({ mode: "edit", competitor: c });
                 }}
-                className="text-blue-600 underline"
+                className="font-medium text-rose-600 transition hover:text-rose-500"
               >
                 Edit
               </button>
               <button
                 type="button"
                 onClick={() => handleDelete(c)}
-                className="text-red-600 underline"
+                className="font-medium text-rose-600 transition hover:text-rose-500"
               >
                 Remove
               </button>
