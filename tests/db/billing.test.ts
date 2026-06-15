@@ -55,6 +55,7 @@ function webhookDeps(): StripeWebhookDeps {
     resend: mockResend,
     fromAddress: "Inteloop <noreply@inteloop.test>",
     portalUrl: "https://app.inteloop.test/dashboard/settings",
+    surveyUrl: "https://app.inteloop.test/dashboard/settings",
   };
 }
 

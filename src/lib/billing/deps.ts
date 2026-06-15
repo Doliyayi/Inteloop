@@ -37,6 +37,7 @@ export function buildStripeWebhookDeps(): StripeWebhookDeps {
     resend: createResendClient({ apiKey: required("RESEND_API_KEY") }),
     fromAddress: defaultFromAddress(),
     portalUrl: `${appUrl()}/dashboard/settings`,
+    surveyUrl: process.env.CANCELLATION_SURVEY_URL ?? `${appUrl()}/dashboard/settings`,
   };
 }
 

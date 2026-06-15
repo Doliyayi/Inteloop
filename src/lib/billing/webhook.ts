@@ -4,7 +4,12 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type Stripe from "stripe";
 
 import type { ResendClient } from "../integrations/resend";
-import { paymentFailedSubject, renderPaymentFailedHtml } from "./billingEmail";
+import {
+  paymentFailedSubject,
+  renderPaymentFailedHtml,
+  renderSubscriptionCancelledHtml,
+  subscriptionCancelledSubject,
+} from "./billingEmail";
 import { planFromStripePriceId } from "./plans";
 
 // Idempotent Stripe webhook processing.
@@ -17,6 +22,8 @@ export type StripeWebhookDeps = {
   fromAddress: string;
   // Where the dunning email's "update payment" button points.
   portalUrl: string;
+  // Where the cancellation email's survey link points (§18).
+  surveyUrl: string;
 };
 
 export type StripeWebhookResult =
@@ -126,7 +133,25 @@ async function onSubscriptionDeleted(
     .from("profiles")
     .update({ plan: "cancelled", cancelled_at: new Date().toISOString() })
     .eq("id", userId);
-  return "subscription deleted → plan=cancelled";
+
+  // §18: cancellation email with the survey link. The standalone survey email
+  // follows ~1h later via the cancellation-survey cron. stripe_events
+  // idempotency ensures this fires once per delete event.
+  const { data: profile } = await deps.supabase
+    .from("profiles")
+    .select("email")
+    .eq("id", userId)
+    .maybeSingle();
+  const email = (profile as { email: string } | null)?.email;
+  if (email) {
+    await deps.resend.send({
+      from: deps.fromAddress,
+      to: email,
+      subject: subscriptionCancelledSubject(),
+      html: renderSubscriptionCancelledHtml({ surveyUrl: deps.surveyUrl }),
+    });
+  }
+  return "subscription deleted → plan=cancelled, cancellation email sent";
 }
 
 async function onPaymentFailed(event: Stripe.Event, deps: StripeWebhookDeps): Promise<string> {
