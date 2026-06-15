@@ -29,6 +29,27 @@ export function renderPaymentFailedHtml(opts: { portalUrl: string }): string {
 </html>`;
 }
 
+// §18: sent on Stripe customer.subscription.deleted. Includes the survey link;
+// the standalone survey email follows ~1 hour later.
+export function subscriptionCancelledSubject(): string {
+  return "You've cancelled Inteloop — here's what you'll miss";
+}
+
+export function renderSubscriptionCancelledHtml(opts: { surveyUrl: string }): string {
+  const url = escapeHtml(opts.surveyUrl);
+  return `<!doctype html>
+<html>
+  <body style="font-family: -apple-system, Segoe UI, Roboto, sans-serif; color: #1a1a1a;">
+    <h2>Your Inteloop subscription is cancelled</h2>
+    <p>You'll keep access until the end of your current billing period. After that,
+      the weekly competitor briefings — change detection, news, and Slack alerts —
+      will stop.</p>
+    <p>Your tracked competitors stay saved, so you can pick up right where you left off.</p>
+    <p><a href="${url}" style="display:inline-block;padding:10px 16px;background:#0b5cff;color:#fff;text-decoration:none;border-radius:6px;">Tell us why you cancelled</a></p>
+  </body>
+</html>`;
+}
+
 export function paymentConfirmedSubject(planName: string): string {
   return `Your Inteloop ${planName} subscription is active`;
 }
