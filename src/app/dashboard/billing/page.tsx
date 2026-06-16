@@ -1,5 +1,10 @@
 import { BillingPanel } from "@/components/billing/BillingPanel";
-import { billingViewState, planCards, type BillingProfile } from "@/lib/billing/view";
+import {
+  billingViewState,
+  defaultChannel,
+  planCards,
+  type BillingProfile,
+} from "@/lib/billing/view";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export const metadata = { title: "Billing — Inteloop" };
@@ -13,11 +18,12 @@ export default async function BillingPage() {
 
   const { data } = await supabase
     .from("profiles")
-    .select("plan, stripe_current_period_end, subscription_renewal_date")
+    .select("plan, currency, stripe_current_period_end, subscription_renewal_date")
     .eq("id", user!.id)
     .maybeSingle();
 
-  const profile: BillingProfile = (data as BillingProfile | null) ?? {
+  const row = data as (BillingProfile & { currency: string | null }) | null;
+  const profile: BillingProfile = row ?? {
     plan: "trial",
     stripe_current_period_end: null,
     subscription_renewal_date: null,
@@ -26,7 +32,11 @@ export default async function BillingPage() {
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-semibold tracking-tight text-neutral-950">Billing</h1>
-      <BillingPanel view={billingViewState(profile)} plans={planCards()} />
+      <BillingPanel
+        view={billingViewState(profile)}
+        plans={planCards()}
+        initialChannel={defaultChannel(row?.currency)}
+      />
     </div>
   );
 }

@@ -9,6 +9,19 @@ export function formatUsd(cents: number): string {
   return `$${dollars.toLocaleString("en-US", { maximumFractionDigits: 0 })}`;
 }
 
+// Whole shillings — mobile money has no minor unit in this product.
+export function formatKes(amount: number): string {
+  return `KES ${amount.toLocaleString("en-US")}`;
+}
+
+export type CheckoutChannel = "card" | "mpesa" | "kcb";
+
+// §10.4: KES users default to mobile money, everyone else to card. The UI lets
+// users switch channels regardless.
+export function defaultChannel(currency: string | null | undefined): CheckoutChannel {
+  return currency === "KES" ? "mpesa" : "card";
+}
+
 // Short feature blurbs per plan (§10.2 features column).
 const PLAN_FEATURES: Record<PaidPlan, string[]> = {
   starter: ["Weekly email report", "Slack alerts", "Report history"],
@@ -26,6 +39,8 @@ export type PlanCard = {
   name: string;
   monthly: string;
   annual: string;
+  // KES monthly price for the mobile-money channel (mobile money is monthly-only).
+  kesMonthly: string;
   competitorLimit: number;
   features: string[];
 };
@@ -38,6 +53,7 @@ export function planCards(): PlanCard[] {
       name: p.name,
       monthly: formatUsd(p.usd.monthlyCents),
       annual: formatUsd(p.usd.annualCents),
+      kesMonthly: formatKes(p.kes.monthly),
       competitorLimit: p.competitorLimit,
       features: PLAN_FEATURES[id],
     };
