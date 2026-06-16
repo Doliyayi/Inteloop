@@ -7,6 +7,8 @@ const LINKS = [
   { href: "/dashboard", label: "Home", exact: true },
   { href: "/dashboard/reports", label: "Reports", exact: false },
   { href: "/dashboard/competitors", label: "Competitors", exact: false },
+  { href: "/dashboard/integrations", label: "Integrations", exact: false },
+  { href: "/dashboard/billing", label: "Billing", exact: false },
   { href: "/dashboard/settings", label: "Settings", exact: false },
 ];
 
