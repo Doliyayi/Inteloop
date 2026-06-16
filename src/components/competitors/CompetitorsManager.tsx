@@ -17,11 +17,13 @@ export type Competitor = {
 type Props = {
   initial: Competitor[];
   welcomeReportSent: boolean;
+  plan: string;
+  limit: number;
 };
 
 type FormState = { mode: "closed" } | { mode: "add" } | { mode: "edit"; competitor: Competitor };
 
-export function CompetitorsManager({ initial, welcomeReportSent }: Props) {
+export function CompetitorsManager({ initial, welcomeReportSent, plan, limit }: Props) {
   const [competitors, setCompetitors] = useState<Competitor[]>(initial);
   const [form, setForm] = useState<FormState>({ mode: "closed" });
   const [error, setError] = useState<string | null>(null);
@@ -29,6 +31,9 @@ export function CompetitorsManager({ initial, welcomeReportSent }: Props) {
 
   const showGeneratingBanner = competitors.length > 0 && !welcomeReportSent;
   const showEmptyBanner = competitors.length === 0;
+  // §7.3/§13 tier gating: how many of the plan's allowance is used.
+  const atLimit = competitors.length >= limit;
+  const canUpgrade = plan === "trial" || plan === "starter" || plan === "growth";
 
   function clearError() {
     setError(null);
@@ -108,32 +113,52 @@ export function CompetitorsManager({ initial, welcomeReportSent }: Props) {
         </div>
       )}
       {showEmptyBanner && (
+        <div className="alert-info">Add your first competitor to receive your welcome report.</div>
+      )}
+
+      <div className="flex items-center justify-between gap-4">
+        <div>
+          <h1 className="text-xl font-semibold">Tracked competitors</h1>
+          <p className="mt-1 text-sm text-neutral-500">
+            {competitors.length} of {limit} competitors used
+          </p>
+        </div>
+        {form.mode === "closed" &&
+          (atLimit ? (
+            canUpgrade ? (
+              <a href="/dashboard/billing" className="btn-primary">
+                Upgrade to add more
+              </a>
+            ) : null
+          ) : (
+            <button
+              type="button"
+              onClick={() => {
+                clearError();
+                setForm({ mode: "add" });
+              }}
+              className="btn-primary"
+            >
+              Add competitor
+            </button>
+          ))}
+      </div>
+
+      {atLimit && form.mode === "closed" && (
         <div className="alert-info">
-          Add your first competitor to receive your welcome report.
+          You&apos;ve reached your plan&apos;s limit of {limit} competitors.{" "}
+          {canUpgrade ? (
+            <a href="/dashboard/billing" className="link">
+              Upgrade your plan
+            </a>
+          ) : (
+            "Remove one to add another."
+          )}
         </div>
       )}
 
-      <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold">Tracked competitors</h1>
-        {form.mode === "closed" && (
-          <button
-            type="button"
-            onClick={() => {
-              clearError();
-              setForm({ mode: "add" });
-            }}
-            className="btn-primary"
-          >
-            Add competitor
-          </button>
-        )}
-      </div>
-
       {form.mode !== "closed" && (
-        <form
-          action={handleSubmit}
-          className="card space-y-4"
-        >
+        <form action={handleSubmit} className="card space-y-4">
           <div>
             <label htmlFor="name" className="field-label">
               Competitor name
@@ -182,11 +207,7 @@ export function CompetitorsManager({ initial, welcomeReportSent }: Props) {
             </p>
           )}
           <div className="flex gap-2">
-            <button
-              type="submit"
-              disabled={pending}
-              className="btn-primary"
-            >
+            <button type="submit" disabled={pending} className="btn-primary">
               {pending ? "Saving…" : form.mode === "edit" ? "Save" : "Add"}
             </button>
             <button
@@ -211,10 +232,7 @@ export function CompetitorsManager({ initial, welcomeReportSent }: Props) {
 
       <ul className="space-y-3">
         {competitors.map((c) => (
-          <li
-            key={c.id}
-            className="card flex items-start justify-between p-4"
-          >
+          <li key={c.id} className="card flex items-start justify-between p-4">
             <div className="space-y-1">
               <p className="font-medium">{c.name}</p>
               <a
