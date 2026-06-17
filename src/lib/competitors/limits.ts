@@ -1,11 +1,14 @@
-// Plan limits per PRD §7.3.
+import { capabilitiesFor } from "@/lib/billing/capabilities";
+
+// Plan limits per PRD §7.3. Derived from the central capability model so there
+// is a single source of truth for the numbers.
 export const PLAN_COMPETITOR_LIMITS: Record<string, number> = {
-  trial: 3,
-  starter: 3,
-  growth: 8,
-  pro: 15,
-  cancelled: 0,
-  payment_failed: 0,
+  trial: capabilitiesFor("trial").competitorLimit,
+  starter: capabilitiesFor("starter").competitorLimit,
+  growth: capabilitiesFor("growth").competitorLimit,
+  pro: capabilitiesFor("pro").competitorLimit,
+  cancelled: capabilitiesFor("cancelled").competitorLimit,
+  payment_failed: capabilitiesFor("payment_failed").competitorLimit,
 };
 
 // PRD §7.4 prescribes the Starter upgrade copy verbatim:
@@ -30,8 +33,7 @@ export function planLimitMessage(plan: string, limit: number): string {
 }
 
 export function competitorLimitFor(plan: string | null | undefined): number {
-  if (!plan) return 0;
-  return PLAN_COMPETITOR_LIMITS[plan] ?? 0;
+  return capabilitiesFor(plan).competitorLimit;
 }
 
 import type { SupabaseClient } from "@supabase/supabase-js";
