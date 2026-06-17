@@ -6,6 +6,7 @@ import type { BraveClient } from "../integrations/brave";
 import type { FirecrawlClient, ScrapeResult } from "../integrations/firecrawl";
 import type { ResendClient, SendEmailResult } from "../integrations/resend";
 import { formatMajorChangeAlert, type SlackNotifier } from "../integrations/slack";
+import { brandedFromAddress, effectiveBranding } from "../whitelabel/branding";
 import type { Generator, GeneratorResult } from "./generator";
 import type { CompetitorInput } from "./prompts";
 import type { WeeklyReport } from "./schemas";
@@ -59,6 +60,10 @@ type ProfileRow = {
   plan: string;
   cancelled_at: string | null;
   slack_webhook_url: string | null;
+  white_label_enabled: boolean;
+  white_label_sender_name: string | null;
+  white_label_logo_url: string | null;
+  white_label_footer_text: string | null;
 };
 
 type CompetitorRow = {
@@ -308,7 +313,9 @@ export async function runWeeklyReport(
   // 1. Load profile and confirm the subscriber is active (§9.3 step 1).
   const { data: profile, error: profileError } = await deps.supabase
     .from("profiles")
-    .select("id, email, plan, cancelled_at, slack_webhook_url")
+    .select(
+      "id, email, plan, cancelled_at, slack_webhook_url, white_label_enabled, white_label_sender_name, white_label_logo_url, white_label_footer_text",
+    )
     .eq("id", userId)
     .maybeSingle();
   if (profileError) return { ok: false, reason: "user_not_found", detail: profileError.message };
@@ -349,11 +356,12 @@ export async function runWeeklyReport(
     };
   }
 
-  // 5. Render + send.
-  const html = renderWeeklyReportHtml(claudeResult.data);
+  // 5. Render + send. White-label branding (§13) for Growth/Pro subscribers.
+  const branding = effectiveBranding(typedProfile);
+  const html = renderWeeklyReportHtml(claudeResult.data, branding);
   const subject = weeklyReportSubject(claudeResult.data);
   const sendResult = await deps.resend.send({
-    from: deps.fromAddress,
+    from: brandedFromAddress(deps.fromAddress, branding),
     to: typedProfile.email,
     subject,
     html,
