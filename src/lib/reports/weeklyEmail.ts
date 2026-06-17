@@ -1,3 +1,5 @@
+import { DEFAULT_BRANDING, type ReportBranding } from "../whitelabel/branding";
+import { brandingFooterHtml, brandingHeaderHtml } from "./welcomeEmail";
 import type { WeeklyReport } from "./schemas";
 
 // Weekly report email render — PRD §9.2 sections. Mirrors welcomeEmail.ts so
@@ -87,15 +89,20 @@ function renderCompetitorBlock(competitor: WeeklyCompetitor): string {
   </section>`;
 }
 
-export function renderWeeklyReportHtml(report: WeeklyReport): string {
+export function renderWeeklyReportHtml(
+  report: WeeklyReport,
+  branding: ReportBranding = DEFAULT_BRANDING,
+): string {
   const competitorBlocks = report.competitors.map(renderCompetitorBlock).join("\n");
 
   return `<!DOCTYPE html>
 <html><body style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:#111;line-height:1.5;max-width:640px;margin:0 auto;padding:24px;">
+  ${brandingHeaderHtml(branding)}
   <h1 style="font-size:22px;margin:0 0 8px;">Your weekly competitor report</h1>
   <p style="color:#6b7280;margin:0 0 24px;">${escapeHtml(report.report_date)}</p>
   ${renderMajorChangeBanner(report)}
   ${renderExecutiveSummary(report)}
   ${competitorBlocks}
+  ${brandingFooterHtml(branding)}
 </body></html>`;
 }

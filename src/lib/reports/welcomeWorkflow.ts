@@ -5,6 +5,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { BraveClient } from "../integrations/brave";
 import type { FirecrawlClient, ScrapeResult } from "../integrations/firecrawl";
 import type { ResendClient, SendEmailResult } from "../integrations/resend";
+import { brandedFromAddress, effectiveBranding } from "../whitelabel/branding";
 import type { Generator, GeneratorResult } from "./generator";
 import type { CompetitorInput } from "./prompts";
 import type { WelcomeReport } from "./schemas";
@@ -54,7 +55,15 @@ type ProfileRow = {
   id: string;
   email: string;
   welcome_report_sent: boolean;
+  plan: string;
+  white_label_enabled: boolean;
+  white_label_sender_name: string | null;
+  white_label_logo_url: string | null;
+  white_label_footer_text: string | null;
 };
+
+const WHITE_LABEL_COLUMNS =
+  "plan, white_label_enabled, white_label_sender_name, white_label_logo_url, white_label_footer_text";
 
 type CompetitorRow = {
   id: string;
@@ -216,7 +225,7 @@ export async function runWelcomeWorkflow(
   // 1. Load profile.
   const { data: profile, error: profileError } = await deps.supabase
     .from("profiles")
-    .select("id, email, welcome_report_sent")
+    .select(`id, email, welcome_report_sent, ${WHITE_LABEL_COLUMNS}`)
     .eq("id", userId)
     .maybeSingle();
   if (profileError) return { ok: false, reason: "user_not_found", detail: profileError.message };
@@ -254,11 +263,13 @@ export async function runWelcomeWorkflow(
   }
 
   // 5. Render + send. PRD §8.4: welcome_report_sent only flips after a
-  // successful Resend delivery.
-  const html = renderWelcomeReportHtml(claudeResult.data);
+  // successful Resend delivery. White-label branding (§13) applies for
+  // Growth/Pro subscribers who've enabled it.
+  const branding = effectiveBranding(typedProfile);
+  const html = renderWelcomeReportHtml(claudeResult.data, branding);
   const subject = welcomeReportSubject(claudeResult.data);
   const sendResult = await deps.resend.send({
-    from: deps.fromAddress,
+    from: brandedFromAddress(deps.fromAddress, branding),
     to: typedProfile.email,
     subject,
     html,

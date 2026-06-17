@@ -1,4 +1,17 @@
+import { DEFAULT_BRANDING, type ReportBranding } from "../whitelabel/branding";
 import type { WelcomeReport } from "./schemas";
+
+// Renders the optional agency logo header + custom footer for white-label
+// reports (PRD §13). Shared by the welcome and weekly email layouts.
+export function brandingHeaderHtml(branding: ReportBranding): string {
+  if (!branding.logoUrl) return "";
+  return `<img src="${escapeHtml(branding.logoUrl)}" alt="${escapeHtml(branding.productName)}" style="max-height:40px;margin-bottom:20px;" />`;
+}
+
+export function brandingFooterHtml(branding: ReportBranding): string {
+  if (!branding.footerText) return "";
+  return `<p style="color:#9ca3af;font-size:12px;border-top:1px solid #e5e7eb;padding-top:16px;margin-top:32px;">${escapeHtml(branding.footerText)}</p>`;
+}
 
 // PRD §8.3 step 6: "if any competitor section is < 100 words: add disclaimer
 // 'Limited data available for [Competitor]'." We compute the threshold over
@@ -92,11 +105,15 @@ function renderCompetitorBlock(competitor: WelcomeCompetitor): string {
 const WHATS_COMING_COPY =
   "Every Monday at 6 AM, you'll get a deeper briefing — week-on-week changes for each competitor, strategic implications, and an executive summary across all of them.";
 
-export function renderWelcomeReportHtml(report: WelcomeReport): string {
+export function renderWelcomeReportHtml(
+  report: WelcomeReport,
+  branding: ReportBranding = DEFAULT_BRANDING,
+): string {
   const competitorBlocks = report.competitors.map(renderCompetitorBlock).join("\n");
 
   return `<!DOCTYPE html>
 <html><body style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:#111;line-height:1.5;max-width:640px;margin:0 auto;padding:24px;">
+  ${brandingHeaderHtml(branding)}
   <h1 style="font-size:22px;margin:0 0 24px;">Your competitor baseline</h1>
   ${competitorBlocks}
   <section style="margin-bottom:24px;">
@@ -106,6 +123,7 @@ export function renderWelcomeReportHtml(report: WelcomeReport): string {
   <p style="font-style:italic;color:#374151;border-top:1px solid #e5e7eb;padding-top:16px;margin-top:24px;">
     ${escapeHtml(report.closing_line)}
   </p>
+  ${brandingFooterHtml(branding)}
 </body></html>`;
 }
 
