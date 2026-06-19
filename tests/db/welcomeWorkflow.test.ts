@@ -128,6 +128,9 @@ function mockGenerator(
     battlecard: async () => {
       throw new Error("battlecard() not implemented in mock");
     },
+    daily: async () => {
+      throw new Error("daily() not implemented in mock");
+    },
   };
 }
 

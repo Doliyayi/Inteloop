@@ -130,6 +130,9 @@ function mockGenerator(data: WeeklyReport): Generator {
     battlecard: async () => {
       throw new Error("battlecard not used");
     },
+    daily: async () => {
+      throw new Error("daily not used");
+    },
   };
 }
 
