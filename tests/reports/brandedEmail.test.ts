@@ -26,6 +26,7 @@ const agency: ReportBranding = {
   logoUrl: "https://agency.example/logo.png",
   footerText: "Sent by Agency Insights",
   whiteLabeled: true,
+  senderDomain: null,
 };
 
 describe("report email branding (PRD §13)", () => {

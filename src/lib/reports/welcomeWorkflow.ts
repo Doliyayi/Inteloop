@@ -60,10 +60,12 @@ type ProfileRow = {
   white_label_sender_name: string | null;
   white_label_logo_url: string | null;
   white_label_footer_text: string | null;
+  white_label_domain: string | null;
+  white_label_domain_verified: boolean;
 };
 
 const WHITE_LABEL_COLUMNS =
-  "plan, white_label_enabled, white_label_sender_name, white_label_logo_url, white_label_footer_text";
+  "plan, white_label_enabled, white_label_sender_name, white_label_logo_url, white_label_footer_text, white_label_domain, white_label_domain_verified";
 
 type CompetitorRow = {
   id: string;

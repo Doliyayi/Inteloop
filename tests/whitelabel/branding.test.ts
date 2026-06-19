@@ -15,6 +15,8 @@ function profile(overrides: Partial<WhiteLabelProfile>): WhiteLabelProfile {
     white_label_sender_name: "Agency Insights",
     white_label_logo_url: "https://agency.example/logo.png",
     white_label_footer_text: "Sent by Agency Insights",
+    white_label_domain: null,
+    white_label_domain_verified: false,
     ...overrides,
   };
 }
@@ -65,6 +67,26 @@ describe("brandedFromAddress", () => {
   it("returns the base address when not white-labeled", () => {
     expect(brandedFromAddress("Inteloop <noreply@inteloop.com>", DEFAULT_BRANDING)).toBe(
       "Inteloop <noreply@inteloop.com>",
+    );
+  });
+
+  it("sends from the custom domain once verified (§13.4)", () => {
+    const b = effectiveBranding(
+      profile({ white_label_domain: "reports.agency.com", white_label_domain_verified: true }),
+    );
+    expect(b.senderDomain).toBe("reports.agency.com");
+    expect(brandedFromAddress("Inteloop <noreply@inteloop.com>", b)).toBe(
+      "Agency Insights <noreply@reports.agency.com>",
+    );
+  });
+
+  it("does NOT use the custom domain until verified", () => {
+    const b = effectiveBranding(
+      profile({ white_label_domain: "reports.agency.com", white_label_domain_verified: false }),
+    );
+    expect(b.senderDomain).toBeNull();
+    expect(brandedFromAddress("Inteloop <noreply@inteloop.com>", b)).toBe(
+      "Agency Insights <noreply@inteloop.com>",
     );
   });
 });

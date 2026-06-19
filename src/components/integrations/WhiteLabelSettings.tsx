@@ -124,8 +124,8 @@ export function WhiteLabelSettings({ initial }: Props) {
       </button>
 
       <p className="text-xs text-neutral-400">
-        Sending reports from your own domain (custom sender domain + DNS verification) is coming
-        soon. For now, reports use your branding from Inteloop&apos;s sending domain.
+        Reports send from your branding. To also send from your own domain, set up a custom sender
+        domain below.
       </p>
     </div>
   );

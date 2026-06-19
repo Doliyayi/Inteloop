@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { hasCapability } from "@/lib/billing/capabilities";
+import { CustomDomainSettings } from "@/components/integrations/CustomDomainSettings";
 import { SlackIntegration } from "@/components/integrations/SlackIntegration";
 import { WhiteLabelSettings } from "@/components/integrations/WhiteLabelSettings";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -14,6 +15,8 @@ type ProfileRow = {
   white_label_sender_name: string | null;
   white_label_logo_url: string | null;
   white_label_footer_text: string | null;
+  white_label_domain: string | null;
+  white_label_domain_verified: boolean;
 };
 
 export default async function IntegrationsPage() {
@@ -26,7 +29,7 @@ export default async function IntegrationsPage() {
   const { data } = await supabase
     .from("profiles")
     .select(
-      "plan, slack_webhook_url, white_label_enabled, white_label_sender_name, white_label_logo_url, white_label_footer_text",
+      "plan, slack_webhook_url, white_label_enabled, white_label_sender_name, white_label_logo_url, white_label_footer_text, white_label_domain, white_label_domain_verified",
     )
     .eq("id", user!.id)
     .maybeSingle();
@@ -40,14 +43,20 @@ export default async function IntegrationsPage() {
       <SlackIntegration savedUrl={profile?.slack_webhook_url ?? ""} />
 
       {canWhiteLabel ? (
-        <WhiteLabelSettings
-          initial={{
-            enabled: profile?.white_label_enabled ?? false,
-            senderName: profile?.white_label_sender_name ?? "",
-            logoUrl: profile?.white_label_logo_url ?? "",
-            footerText: profile?.white_label_footer_text ?? "",
-          }}
-        />
+        <>
+          <WhiteLabelSettings
+            initial={{
+              enabled: profile?.white_label_enabled ?? false,
+              senderName: profile?.white_label_sender_name ?? "",
+              logoUrl: profile?.white_label_logo_url ?? "",
+              footerText: profile?.white_label_footer_text ?? "",
+            }}
+          />
+          <CustomDomainSettings
+            initialDomain={profile?.white_label_domain ?? null}
+            initialVerified={profile?.white_label_domain_verified ?? false}
+          />
+        </>
       ) : (
         <div className="card space-y-3">
           <h2 className="text-base font-semibold text-neutral-950">White-label reports</h2>
