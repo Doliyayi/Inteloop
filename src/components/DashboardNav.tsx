@@ -9,6 +9,7 @@ const LINKS = [
   { href: "/dashboard/competitors", label: "Competitors", exact: false },
   { href: "/dashboard/battlecards", label: "Battlecards", exact: false },
   { href: "/dashboard/integrations", label: "Integrations", exact: false },
+  { href: "/dashboard/api", label: "API", exact: false },
   { href: "/dashboard/billing", label: "Billing", exact: false },
   { href: "/dashboard/settings", label: "Settings", exact: false },
 ];

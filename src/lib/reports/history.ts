@@ -50,20 +50,24 @@ export function clampPageSize(value: number | undefined): number {
 }
 
 // Paginated, newest-first list of the caller's reports (§11.1).
+// Pass `userId` to scope explicitly when using a service-role client (the
+// public API); omit it to rely on RLS (dashboard session client).
 export async function listReports(
   supabase: SupabaseClient,
-  opts: { page?: number; pageSize?: number } = {},
+  opts: { page?: number; pageSize?: number; userId?: string } = {},
 ): Promise<ReportPage> {
   const page = clampPage(opts.page);
   const pageSize = clampPageSize(opts.pageSize);
   const from = (page - 1) * pageSize;
   const to = from + pageSize - 1;
 
-  const { data, count, error } = await supabase
+  let query = supabase
     .from("reports")
     .select(LIST_COLUMNS, { count: "exact" })
-    .order("created_at", { ascending: false })
-    .range(from, to);
+    .order("created_at", { ascending: false });
+  if (opts.userId) query = query.eq("user_id", opts.userId);
+
+  const { data, count, error } = await query.range(from, to);
 
   if (error) throw new Error(`listReports failed: ${error.message}`);
 
@@ -84,12 +88,12 @@ export async function listReports(
 export async function getReport(
   supabase: SupabaseClient,
   id: string,
+  userId?: string,
 ): Promise<ReportDetail | null> {
-  const { data, error } = await supabase
-    .from("reports")
-    .select(`${LIST_COLUMNS}, content`)
-    .eq("id", id)
-    .maybeSingle();
+  let query = supabase.from("reports").select(`${LIST_COLUMNS}, content`).eq("id", id);
+  if (userId) query = query.eq("user_id", userId);
+
+  const { data, error } = await query.maybeSingle();
 
   if (error) throw new Error(`getReport failed: ${error.message}`);
   return (data as ReportDetail | null) ?? null;
