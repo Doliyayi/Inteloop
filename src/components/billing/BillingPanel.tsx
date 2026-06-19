@@ -221,7 +221,22 @@ export function BillingPanel({ view, plans, initialChannel }: Props) {
                   : "rounded-full px-4 py-1.5 font-medium text-neutral-600 hover:text-neutral-900"
               }
             >
-              {i === "monthly" ? "Monthly" : "Annual"}
+              {i === "monthly" ? (
+                "Monthly"
+              ) : (
+                <span className="flex items-center gap-1.5">
+                  Annual
+                  <span
+                    className={
+                      interval === "annual"
+                        ? "rounded-full bg-emerald-500 px-1.5 py-0.5 text-xs font-medium text-white"
+                        : "rounded-full bg-emerald-100 px-1.5 py-0.5 text-xs font-medium text-emerald-700"
+                    }
+                  >
+                    2 months free
+                  </span>
+                </span>
+              )}
             </button>
           ))}
         </div>
@@ -247,8 +262,8 @@ export function BillingPanel({ view, plans, initialChannel }: Props) {
 
       <div className="grid gap-5 md:grid-cols-3">
         {plans.map((p) => {
-          const price = mobile ? p.kesMonthly : interval === "monthly" ? p.monthly : p.annual;
-          const per = mobile ? "/mo" : interval === "monthly" ? "/mo" : "/yr";
+          const price = mobile ? p.kesMonthly : interval === "annual" ? p.annualMonthly : p.monthly;
+          const showAnnualSubtext = !mobile && interval === "annual";
           const label =
             channel === "mpesa"
               ? "Pay with Mpesa"
@@ -262,8 +277,11 @@ export function BillingPanel({ view, plans, initialChannel }: Props) {
                 <span className="text-3xl font-semibold tracking-tight text-neutral-950">
                   {price}
                 </span>
-                <span className="text-sm text-neutral-500">{per}</span>
+                <span className="text-sm text-neutral-500">/mo</span>
               </p>
+              {showAnnualSubtext ? (
+                <p className="mt-0.5 text-xs text-neutral-400">Billed {p.annual} annually</p>
+              ) : null}
               <p className="mt-1 text-sm text-neutral-500">
                 Track up to {p.competitorLimit} competitors
               </p>

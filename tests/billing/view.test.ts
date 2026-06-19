@@ -30,6 +30,25 @@ describe("planCards", () => {
     expect(starter.competitorLimit).toBe(3);
     expect(starter.features.length).toBeGreaterThan(0);
   });
+
+  it("annual incentive: annualMonthly is the per-month equivalent and annualSavingsMonths is 2 for all plans (PRD §10.2)", () => {
+    const cards = planCards();
+    const [starter, growth, pro] = cards as [
+      (typeof cards)[0],
+      (typeof cards)[0],
+      (typeof cards)[0],
+    ];
+
+    // Per-month equivalent = round(annualCents / 12)
+    expect(starter.annualMonthly).toBe("$164"); // round(197000/12) = 16417¢ → $164
+    expect(growth.annualMonthly).toBe("$331"); // round(397000/12) = 33083¢ → $331
+    expect(pro.annualMonthly).toBe("$664"); // round(797000/12) = 66417¢ → $664
+
+    // All plans are 10 months of monthly price → 2 months free
+    expect(starter.annualSavingsMonths).toBe(2);
+    expect(growth.annualSavingsMonths).toBe(2);
+    expect(pro.annualSavingsMonths).toBe(2);
+  });
 });
 
 describe("billingViewState (PRD §11.2)", () => {
