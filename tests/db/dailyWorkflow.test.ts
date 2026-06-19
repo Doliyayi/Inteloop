@@ -1,19 +1,17 @@
-import { afterAll, beforeEach, describe, expect, it } from "vitest";
+import { afterAll, describe, expect, it } from "vitest";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { randomUUID } from "node:crypto";
 
 import type { BraveClient } from "@/lib/integrations/brave";
-import type { FirecrawlClient, ScrapeResult } from "@/lib/integrations/firecrawl";
 import type { ResendClient, SendEmailResult } from "@/lib/integrations/resend";
 import type { SlackMessage, SlackNotifier } from "@/lib/integrations/slack";
 import type { Generator, GeneratorResult } from "@/lib/reports/generator";
-import type { WeeklyReport } from "@/lib/reports/schemas";
+import type { DailyBriefing } from "@/lib/reports/schemas";
 import {
-  findActiveSubscribers,
-  findSubscribersMissingRecentReport,
-  runWeeklyReport,
-  type WeeklyWorkflowDeps,
-} from "@/lib/reports/weeklyWorkflow";
+  findProSubscribers,
+  runDailyBriefing,
+  type DailyWorkflowDeps,
+} from "@/lib/reports/dailyWorkflow";
 
 const URL = process.env.SUPABASE_URL ?? "http://127.0.0.1:54321";
 const SERVICE = process.env.SUPABASE_SERVICE_ROLE_KEY ?? "";
@@ -33,10 +31,10 @@ async function createSubscriber(
     competitor?: string | null;
   } = {},
 ): Promise<{ userId: string; email: string }> {
-  const email = `weekly-${randomUUID()}@inteloop.test`;
+  const email = `daily-${randomUUID()}@inteloop.test`;
   const { data, error } = await admin.auth.admin.createUser({
     email,
-    password: "Weekly-Test-1!",
+    password: "Daily-Test-1!",
     email_confirm: true,
   });
   if (error || !data.user) throw error ?? new Error("user not created");
@@ -46,7 +44,7 @@ async function createSubscriber(
   await admin
     .from("profiles")
     .update({
-      plan: opts.plan ?? "starter",
+      plan: opts.plan ?? "pro",
       cancelled_at: opts.cancelledAt ?? null,
       slack_webhook_url: opts.slackWebhookUrl ?? null,
     })
@@ -68,75 +66,66 @@ afterAll(async () => {
 
 // --- Mock adapters -----------------------------------------------------------
 
-function mockFirecrawl(): FirecrawlClient {
-  const ok = (): ScrapeResult => ({
-    ok: true,
-    markdown: Array.from({ length: 300 }, (_, i) => `w${i}`).join(" "),
-    wordCount: 300,
-    scrapeLimited: false,
-  });
-  return { scrape: async () => ok() };
-}
-
 function mockBrave(): BraveClient {
   return {
     search: async () => ({
       ok: true,
       results: [
         {
-          title: "Acme news",
+          title: "Acme news today",
           snippet: "summary",
           url: "https://news.example/a",
-          date: "2026-06-13",
+          date: "2026-06-19",
         },
       ],
     }),
   };
 }
 
-function weeklyReportData(overrides: Partial<WeeklyReport> = {}): WeeklyReport {
+function dailyReportData(overrides: Partial<DailyBriefing> = {}): DailyBriefing {
   return {
-    report_date: "2026-06-15",
-    executive_summary: ["Acme cut prices."],
+    report_date: "2026-06-19",
+    summary: "No major changes today.",
     major_change: false,
     major_change_summary: null,
-    competitors: [
+    items: [
       {
-        name: "Acme",
-        weekly_delta: "Cut prices 20%.",
-        news: [],
-        messaging_changes: null,
-        strategic_implications: "Pressure on mid-tier.",
-        signals_to_watch: ["annual discounts"],
+        competitor: "Acme",
+        headline: "Acme news today",
+        summary: "summary",
+        url: "https://news.example/a",
       },
     ],
     ...overrides,
   };
 }
 
-function mockGenerator(data: WeeklyReport): Generator {
-  const result: GeneratorResult<WeeklyReport> = {
-    ok: true,
-    data,
-    usage: { input_tokens: 100, output_tokens: 50 },
-    model: "claude-sonnet-4-5",
-    attempts: 1,
-  };
+function mockGenerator(data?: DailyBriefing | GeneratorResult<DailyBriefing>): Generator {
+  const result: GeneratorResult<DailyBriefing> =
+    data && "ok" in data
+      ? (data as GeneratorResult<DailyBriefing>)
+      : {
+          ok: true,
+          data: data ?? dailyReportData(),
+          usage: { input_tokens: 100, output_tokens: 50 },
+          model: "claude-sonnet-4-5",
+          attempts: 1,
+        };
   return {
     welcome: async () => {
       throw new Error("welcome not used");
     },
-    weekly: async () => result,
+    weekly: async () => {
+      throw new Error("weekly not used");
+    },
     battlecard: async () => {
       throw new Error("battlecard not used");
     },
-    daily: async () => {
-      throw new Error("daily not used");
-    },
+    daily: async () => result,
   };
 }
 
-function mockResend(result: SendEmailResult = { ok: true, id: "msg_weekly" }): ResendClient {
+function mockResend(result: SendEmailResult = { ok: true, id: "msg_daily" }): ResendClient {
   return { send: async () => result };
 }
 
@@ -150,12 +139,11 @@ function recordingSlack(calls: SlackCall[]): SlackNotifier {
   };
 }
 
-function buildDeps(overrides: Partial<WeeklyWorkflowDeps> = {}): WeeklyWorkflowDeps {
+function buildDeps(overrides: Partial<DailyWorkflowDeps> = {}): DailyWorkflowDeps {
   return {
     supabase: admin,
-    firecrawl: overrides.firecrawl ?? mockFirecrawl(),
     brave: overrides.brave ?? mockBrave(),
-    generator: overrides.generator ?? mockGenerator(weeklyReportData()),
+    generator: overrides.generator ?? mockGenerator(),
     resend: overrides.resend ?? mockResend(),
     slack: overrides.slack ?? recordingSlack([]),
     fromAddress: "Inteloop <noreply@inteloop.com>",
@@ -165,25 +153,27 @@ function buildDeps(overrides: Partial<WeeklyWorkflowDeps> = {}): WeeklyWorkflowD
 
 // --- Tests -------------------------------------------------------------------
 
-describe("runWeeklyReport (PRD §9)", () => {
-  it("happy path: sends email, inserts weekly report + links + usage", async () => {
+describe("runDailyBriefing (PRD §9.4)", () => {
+  it("happy path: sends email, inserts daily report + links + usage", async () => {
     const { userId } = await createSubscriber({ competitor: "Acme" });
-    const result = await runWeeklyReport(userId, buildDeps());
+    const result = await runDailyBriefing(userId, buildDeps());
     expect(result.ok).toBe(true);
     if (!result.ok) throw new Error("expected ok");
 
     expect(result.competitorCount).toBe(1);
-    expect(result.emailId).toBe("msg_weekly");
+    expect(result.emailId).toBe("msg_daily");
     expect(result.majorChange).toBe(false);
 
     const { data: report } = await admin
       .from("reports")
-      .select("report_type, status, email_subject, delivered_at")
+      .select("report_type, status, email_subject, delivered_at, content")
       .eq("id", result.reportId)
       .single();
-    expect(report?.report_type).toBe("weekly");
+    expect(report?.report_type).toBe("daily");
     expect(report?.status).toBe("delivered");
-    expect(report?.email_subject).toContain("2026-06-15");
+    expect(report?.email_subject).toContain("2026-06-19");
+    expect(report?.delivered_at).toBeTruthy();
+    expect(report?.content).toMatchObject({ report_date: "2026-06-19" });
 
     const { data: links } = await admin
       .from("report_competitors")
@@ -193,20 +183,21 @@ describe("runWeeklyReport (PRD §9)", () => {
 
     const { data: usage } = await admin.from("api_usage").select("provider").eq("user_id", userId);
     const providers = (usage ?? []).map((r) => (r as { provider: string }).provider);
-    expect(providers).toEqual(expect.arrayContaining(["firecrawl", "brave", "claude", "resend"]));
+    expect(providers).toEqual(expect.arrayContaining(["brave", "claude", "resend"]));
+    expect(providers).not.toContain("firecrawl");
   });
 
-  it("fires a Slack alert when major_change is true and a webhook is configured (§9.3f/§12)", async () => {
+  it("fires a Slack alert when major_change is true and a webhook is configured (§9.4/§12)", async () => {
     const { userId } = await createSubscriber({
       competitor: "Acme",
-      slackWebhookUrl: "https://hooks.slack.com/services/T0/B0/abc",
+      slackWebhookUrl: "https://hooks.slack.com/services/T0/B0/daily",
     });
     const calls: SlackCall[] = [];
-    const data = weeklyReportData({
+    const data = dailyReportData({
       major_change: true,
-      major_change_summary: "Acme acquired Beta.",
+      major_change_summary: "Acme slashed prices 30%.",
     });
-    const result = await runWeeklyReport(
+    const result = await runDailyBriefing(
       userId,
       buildDeps({ generator: mockGenerator(data), slack: recordingSlack(calls) }),
     );
@@ -214,15 +205,15 @@ describe("runWeeklyReport (PRD §9)", () => {
     if (!result.ok) throw new Error("expected ok");
     expect(result.slackAlerted).toBe(true);
     expect(calls).toHaveLength(1);
-    expect(calls[0]!.message.text).toContain("Acme acquired Beta.");
+    expect(calls[0]!.message.text).toContain("Acme slashed prices 30%.");
     expect(calls[0]!.message.text).toContain(result.reportId);
   });
 
   it("does not alert Slack when major_change is true but no webhook is set", async () => {
     const { userId } = await createSubscriber({ competitor: "Acme", slackWebhookUrl: null });
     const calls: SlackCall[] = [];
-    const data = weeklyReportData({ major_change: true, major_change_summary: "Big news." });
-    const result = await runWeeklyReport(
+    const data = dailyReportData({ major_change: true, major_change_summary: "Big news." });
+    const result = await runDailyBriefing(
       userId,
       buildDeps({ generator: mockGenerator(data), slack: recordingSlack(calls) }),
     );
@@ -232,31 +223,63 @@ describe("runWeeklyReport (PRD §9)", () => {
     expect(calls).toHaveLength(0);
   });
 
-  it("skips a non-subscribed user (trial plan)", async () => {
-    const { userId } = await createSubscriber({ plan: "trial", competitor: "Acme" });
-    const result = await runWeeklyReport(userId, buildDeps());
-    expect(result).toMatchObject({ ok: false, reason: "not_subscribed" });
+  it("returns not_pro for a non-Pro subscriber (§9.4 Pro-only gate)", async () => {
+    const { userId } = await createSubscriber({ plan: "growth", competitor: "Acme" });
+    const result = await runDailyBriefing(userId, buildDeps());
+    expect(result).toMatchObject({ ok: false, reason: "not_pro" });
   });
 
-  it("skips a cancelled subscriber", async () => {
+  it("returns not_pro for a cancelled Pro subscriber", async () => {
     const { userId } = await createSubscriber({
-      plan: "starter",
+      plan: "pro",
       cancelledAt: new Date().toISOString(),
       competitor: "Acme",
     });
-    const result = await runWeeklyReport(userId, buildDeps());
-    expect(result).toMatchObject({ ok: false, reason: "not_subscribed" });
+    const result = await runDailyBriefing(userId, buildDeps());
+    expect(result).toMatchObject({ ok: false, reason: "not_pro" });
   });
 
-  it("skips a subscriber with no competitors", async () => {
+  it("returns no_competitors when the user has none", async () => {
     const { userId } = await createSubscriber({ competitor: null });
-    const result = await runWeeklyReport(userId, buildDeps());
+    const result = await runDailyBriefing(userId, buildDeps());
     expect(result).toMatchObject({ ok: false, reason: "no_competitors" });
+  });
+
+  it("returns claude_failed and does NOT send email when generator fails", async () => {
+    const { userId } = await createSubscriber({ competitor: "Acme" });
+    let resendCallCount = 0;
+    const resendCounter: ResendClient = {
+      send: async () => {
+        resendCallCount += 1;
+        return { ok: true, id: "msg_x" };
+      },
+    };
+    const result = await runDailyBriefing(
+      userId,
+      buildDeps({
+        generator: mockGenerator({
+          ok: false,
+          reason: "rate_limited",
+          error: "exhausted",
+          attempts: 4,
+        }),
+        resend: resendCounter,
+      }),
+    );
+    expect(result).toMatchObject({ ok: false, reason: "claude_failed" });
+    expect(resendCallCount).toBe(0);
+
+    const { data: reports } = await admin
+      .from("reports")
+      .select("id")
+      .eq("user_id", userId)
+      .eq("report_type", "daily");
+    expect(reports).toEqual([]);
   });
 
   it("does not persist a report when the email send fails (§9.5 isolation)", async () => {
     const { userId } = await createSubscriber({ competitor: "Acme" });
-    const result = await runWeeklyReport(
+    const result = await runDailyBriefing(
       userId,
       buildDeps({ resend: mockResend({ ok: false, reason: "outage", status: 503 }) }),
     );
@@ -265,42 +288,25 @@ describe("runWeeklyReport (PRD §9)", () => {
       .from("reports")
       .select("id")
       .eq("user_id", userId)
-      .eq("report_type", "weekly");
+      .eq("report_type", "daily");
     expect(reports).toEqual([]);
   });
 });
 
-describe("batch queries (PRD §9.3 step 1, §21.6)", () => {
-  it("findActiveSubscribers includes active paid users and excludes trial/cancelled", async () => {
-    const active = await createSubscriber({ plan: "growth", competitor: "Acme" });
-    const trial = await createSubscriber({ plan: "trial", competitor: "Acme" });
+describe("findProSubscribers (PRD §9.4)", () => {
+  it("returns only active Pro users, excluding trial/growth/cancelled", async () => {
+    const pro = await createSubscriber({ plan: "pro" });
+    const growth = await createSubscriber({ plan: "growth" });
+    const trial = await createSubscriber({ plan: "trial" });
     const cancelled = await createSubscriber({
       plan: "pro",
       cancelledAt: new Date().toISOString(),
-      competitor: "Acme",
     });
 
-    const ids = await findActiveSubscribers(admin);
-    expect(ids).toContain(active.userId);
+    const ids = await findProSubscribers(admin);
+    expect(ids).toContain(pro.userId);
+    expect(ids).not.toContain(growth.userId);
     expect(ids).not.toContain(trial.userId);
     expect(ids).not.toContain(cancelled.userId);
-  });
-
-  it("findSubscribersMissingRecentReport excludes users with a recent weekly report", async () => {
-    const fresh = await createSubscriber({ plan: "starter", competitor: "Acme" });
-    const stale = await createSubscriber({ plan: "starter", competitor: "Acme" });
-
-    // Give `fresh` a weekly report dated now; `stale` gets none.
-    await admin.from("reports").insert({
-      user_id: fresh.userId,
-      report_type: "weekly",
-      status: "delivered",
-      content: {},
-      delivered_at: new Date().toISOString(),
-    });
-
-    const missing = await findSubscribersMissingRecentReport(admin, 8);
-    expect(missing).toContain(stale.userId);
-    expect(missing).not.toContain(fresh.userId);
   });
 });

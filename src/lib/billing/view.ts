@@ -39,6 +39,12 @@ export type PlanCard = {
   name: string;
   monthly: string;
   annual: string;
+  // Per-month equivalent when billed annually (e.g. "$164"). Used to show
+  // the effective monthly rate on annual cards so visitors compare apples-to-apples.
+  annualMonthly: string;
+  // Whole months saved vs paying monthly (e.g. 2). Derived from plan cents so
+  // the badge stays accurate if prices change.
+  annualSavingsMonths: number;
   // KES monthly price for the mobile-money channel (mobile money is monthly-only).
   kesMonthly: string;
   competitorLimit: number;
@@ -48,11 +54,17 @@ export type PlanCard = {
 export function planCards(): PlanCard[] {
   return PAID_PLANS.map((id) => {
     const p = PLANS[id];
+    const annualMonthlyCents = Math.round(p.usd.annualCents / 12);
+    const annualSavingsMonths = Math.round(
+      (p.usd.monthlyCents * 12 - p.usd.annualCents) / p.usd.monthlyCents,
+    );
     return {
       id,
       name: p.name,
       monthly: formatUsd(p.usd.monthlyCents),
       annual: formatUsd(p.usd.annualCents),
+      annualMonthly: formatUsd(annualMonthlyCents),
+      annualSavingsMonths,
       kesMonthly: formatKes(p.kes.monthly),
       competitorLimit: p.competitorLimit,
       features: PLAN_FEATURES[id],

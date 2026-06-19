@@ -28,6 +28,10 @@ export type BattlecardPromptInput = {
   competitor: CompetitorInput;
 };
 
+export type DailyPromptInput = {
+  competitors: CompetitorInput[];
+};
+
 export type PromptPair = { system: string; user: string };
 
 // =========================================================
@@ -93,6 +97,23 @@ Return a JSON object:
   "how_to_win": ["string (max 5 talking points)"],
   "landmines": ["string (topics to avoid)"],
   "generated_at": "ISO timestamp"
+}`;
+
+// PRD §9.4: condensed, news-only daily briefing for Pro subscribers.
+export const DAILY_SYSTEM_PROMPT = `You are a competitive intelligence analyst. Generate a SHORT daily \
+briefing covering only notable NEWS about the tracked competitors from the last 24 hours. No deep \
+analysis, no website teardown — just what happened and a one-line note on why it matters. If there \
+is nothing notable for a competitor, omit it. Flag major changes explicitly with the major_change field.
+
+Return a JSON object:
+{
+  "report_date": "string (YYYY-MM-DD)",
+  "summary": "string (1-2 sentences across all competitors; if nothing notable, say so)",
+  "major_change": boolean,
+  "major_change_summary": "string or null",
+  "items": [
+    {"competitor": "string", "headline": "string", "summary": "string (1 sentence)", "url": "string"}
+  ]
 }`;
 
 const JSON_ONLY_REMINDER =
@@ -171,6 +192,21 @@ export function buildWeeklyPrompt(input: WeeklyPromptInput): PromptPair {
 
 export function buildBattlecardPrompt(input: BattlecardPromptInput): PromptPair {
   return { system: BATTLECARD_SYSTEM_PROMPT, user: buildBattlecardUserMessage(input) };
+}
+
+export function buildDailyUserMessage(input: DailyPromptInput): string {
+  const blocks = input.competitors.map(formatCompetitorBlock);
+  return [
+    "I need a daily competitor news briefing (last 24 hours).",
+    "",
+    blocks.join("\n\n"),
+    "",
+    JSON_ONLY_REMINDER,
+  ].join("\n");
+}
+
+export function buildDailyPrompt(input: DailyPromptInput): PromptPair {
+  return { system: DAILY_SYSTEM_PROMPT, user: buildDailyUserMessage(input) };
 }
 
 // =========================================================

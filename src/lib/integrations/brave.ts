@@ -4,7 +4,7 @@ const DEFAULT_BASE_URL = "https://api.search.brave.com";
 const DEFAULT_TIMEOUT_MS = 15_000;
 const DEFAULT_COUNT = 5; // PRD §8.3 / §9.3: top 5 results
 
-export type BraveFreshness = "pw" | "pm" | "py";
+export type BraveFreshness = "pd" | "pw" | "pm" | "py";
 export type BraveSearchType = "web" | "news";
 
 export type BraveConfig = {

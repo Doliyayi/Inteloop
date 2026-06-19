@@ -5,20 +5,24 @@ import type { z } from "zod";
 
 import {
   buildBattlecardPrompt,
+  buildDailyPrompt,
   buildWeeklyPrompt,
   buildWelcomePrompt,
   truncateScrapedContent,
   type BattlecardPromptInput,
   type CompetitorInput,
+  type DailyPromptInput,
   type PromptPair,
   type WeeklyPromptInput,
   type WelcomePromptInput,
 } from "./prompts";
 import {
   battlecardSchema,
+  dailyBriefingSchema,
   weeklyReportSchema,
   welcomeReportSchema,
   type Battlecard,
+  type DailyBriefing,
   type WeeklyReport,
   type WelcomeReport,
 } from "./schemas";
@@ -70,12 +74,12 @@ export type GeneratorFailure = {
 
 export type GeneratorResult<T> = GeneratorSuccess<T> | GeneratorFailure;
 
-type ReportType = "welcome" | "weekly" | "battlecard";
-type AnyInput = WelcomePromptInput | WeeklyPromptInput | BattlecardPromptInput;
+type ReportType = "welcome" | "weekly" | "battlecard" | "daily";
+type AnyInput = WelcomePromptInput | WeeklyPromptInput | BattlecardPromptInput | DailyPromptInput;
 
 function extractCompetitorList(type: ReportType, input: AnyInput): CompetitorInput[] {
   if (type === "battlecard") return [(input as BattlecardPromptInput).competitor];
-  return (input as WelcomePromptInput | WeeklyPromptInput).competitors;
+  return (input as WelcomePromptInput | WeeklyPromptInput | DailyPromptInput).competitors;
 }
 
 function withTruncatedCompetitors(type: ReportType, input: AnyInput, maxWords: number): AnyInput {
@@ -85,7 +89,7 @@ function withTruncatedCompetitors(type: ReportType, input: AnyInput, maxWords: n
     if (!first) return input;
     return { competitor: first } as BattlecardPromptInput;
   }
-  if (type === "welcome") {
+  if (type === "welcome" || type === "daily") {
     return { competitors } as WelcomePromptInput;
   }
   return {
@@ -105,6 +109,9 @@ function buildPromptFor(type: ReportType, input: AnyInput, extraInstruction: str
       break;
     case "battlecard":
       pair = buildBattlecardPrompt(input as BattlecardPromptInput);
+      break;
+    case "daily":
+      pair = buildDailyPrompt(input as DailyPromptInput);
       break;
   }
   if (extraInstruction) {
@@ -142,6 +149,7 @@ export type Generator = {
   welcome(input: WelcomePromptInput): Promise<GeneratorResult<WelcomeReport>>;
   weekly(input: WeeklyPromptInput): Promise<GeneratorResult<WeeklyReport>>;
   battlecard(input: BattlecardPromptInput): Promise<GeneratorResult<Battlecard>>;
+  daily(input: DailyPromptInput): Promise<GeneratorResult<DailyBriefing>>;
 };
 
 export function createReportGenerator(config: GeneratorConfig): Generator {
@@ -279,6 +287,7 @@ export function createReportGenerator(config: GeneratorConfig): Generator {
     welcome: (input) => run("welcome", input, welcomeReportSchema),
     weekly: (input) => run("weekly", input, weeklyReportSchema),
     battlecard: (input) => run("battlecard", input, battlecardSchema),
+    daily: (input) => run("daily", input, dailyBriefingSchema),
   };
 }
 
