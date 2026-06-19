@@ -71,18 +71,40 @@ export const battlecardSchema = z.object({
   generated_at: z.string(),
 });
 
+// =========================================================
+// Daily briefing — PRD §9.4 (condensed, news-only). No §19 prompt was
+// specified, so this is a lightweight schema introduced for the daily cron.
+// =========================================================
+export const dailyBriefingSchema = z.object({
+  report_date: z.string(),
+  summary: z.string(),
+  major_change: z.boolean(),
+  major_change_summary: z.string().nullable(),
+  items: z.array(
+    z.object({
+      competitor: z.string(),
+      headline: z.string(),
+      summary: z.string(),
+      url: z.string(),
+    }),
+  ),
+});
+
 export type WelcomeReport = z.infer<typeof welcomeReportSchema>;
 export type WeeklyReport = z.infer<typeof weeklyReportSchema>;
 export type Battlecard = z.infer<typeof battlecardSchema>;
+export type DailyBriefing = z.infer<typeof dailyBriefingSchema>;
 
 export type ReportSchemaByType = {
   welcome: typeof welcomeReportSchema;
   weekly: typeof weeklyReportSchema;
   battlecard: typeof battlecardSchema;
+  daily: typeof dailyBriefingSchema;
 };
 
 export const reportSchemas: ReportSchemaByType = {
   welcome: welcomeReportSchema,
   weekly: weeklyReportSchema,
   battlecard: battlecardSchema,
+  daily: dailyBriefingSchema,
 };

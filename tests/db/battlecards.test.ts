@@ -50,6 +50,9 @@ function mockGenerator(): Generator {
     weekly: async () => {
       throw new Error("unused");
     },
+    daily: async () => {
+      throw new Error("unused");
+    },
     battlecard: async () => ({
       ok: true,
       data,
