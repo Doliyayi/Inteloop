@@ -5,15 +5,12 @@ import { useFormState } from "react-dom";
 import { signupAction, type ActionResult } from "@/lib/auth/actions";
 import { SubmitButton } from "./SubmitButton";
 
-export function SignupForm() {
+export function SignupForm({ refCode }: { refCode?: string }) {
   const [state, formAction] = useFormState<ActionResult | null, FormData>(signupAction, null);
 
   if (state?.ok) {
     return (
-      <div
-        role="status"
-        className="alert-success"
-      >
+      <div role="status" className="alert-success">
         Check your email to confirm your account.
       </div>
     );
@@ -21,6 +18,7 @@ export function SignupForm() {
 
   return (
     <form action={formAction} className="space-y-4">
+      {refCode && <input type="hidden" name="ref_code" value={refCode} />}
       <div>
         <label htmlFor="email" className="field-label">
           Email

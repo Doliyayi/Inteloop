@@ -30,6 +30,7 @@ export async function signupAction(
   const parsed = signupSchema.safeParse({
     email: formData.get("email"),
     password: formData.get("password"),
+    ref_code: formData.get("ref_code") ?? undefined,
   });
   if (!parsed.success) {
     return { ok: false, error: parsed.error.errors[0]?.message ?? "Invalid input." };
@@ -39,7 +40,12 @@ export async function signupAction(
   const { data, error } = await supabase.auth.signUp({
     email: parsed.data.email,
     password: parsed.data.password,
-    options: { emailRedirectTo: `${authCallbackUrl()}?type=signup` },
+    options: {
+      emailRedirectTo: `${authCallbackUrl()}?type=signup`,
+      // Carry the referral code through the email-confirmation flow so the
+      // callback can link the referral after the user confirms their email.
+      data: parsed.data.ref_code ? { ref_code: parsed.data.ref_code } : undefined,
+    },
   });
 
   if (error) {

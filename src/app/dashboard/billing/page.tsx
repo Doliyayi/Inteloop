@@ -1,10 +1,13 @@
 import { BillingPanel } from "@/components/billing/BillingPanel";
+import { ReferralPanel } from "@/components/referrals/ReferralPanel";
+import { hasCapability } from "@/lib/billing/capabilities";
 import {
   billingViewState,
   defaultChannel,
   planCards,
   type BillingProfile,
 } from "@/lib/billing/view";
+import { getReferralStats } from "@/lib/referrals/queries";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export const metadata = { title: "Billing — Inteloop" };
@@ -29,6 +32,9 @@ export default async function BillingPage() {
     subscription_renewal_date: null,
   };
 
+  const canReferral = hasCapability(row?.plan, "referrals");
+  const referralStats = canReferral ? await getReferralStats(user!.id) : null;
+
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-semibold tracking-tight text-neutral-950">Billing</h1>
@@ -37,6 +43,13 @@ export default async function BillingPage() {
         plans={planCards()}
         initialChannel={defaultChannel(row?.currency)}
       />
+      {referralStats && (
+        <ReferralPanel
+          link={referralStats.link}
+          signups={referralStats.signups}
+          conversions={referralStats.conversions}
+        />
+      )}
     </div>
   );
 }
