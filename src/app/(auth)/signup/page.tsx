@@ -4,7 +4,11 @@ import { SignupForm } from "@/components/auth/SignupForm";
 
 export const metadata = { title: "Sign up — Inteloop" };
 
-export default function SignupPage() {
+type Props = { searchParams: { ref?: string } };
+
+export default function SignupPage({ searchParams }: Props) {
+  const refCode = typeof searchParams.ref === "string" ? searchParams.ref : undefined;
+
   return (
     <div className="space-y-6">
       <div className="space-y-1">
@@ -13,7 +17,7 @@ export default function SignupPage() {
         </h1>
         <p className="text-sm text-neutral-500">Start your competitor intelligence trial.</p>
       </div>
-      <SignupForm />
+      <SignupForm refCode={refCode} />
       <p className="text-sm text-neutral-500">
         Already have an account?{" "}
         <Link href="/login" className="link">

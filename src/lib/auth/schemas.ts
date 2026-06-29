@@ -11,6 +11,11 @@ export const passwordSchema = z.string().min(8, "Password must be at least 8 cha
 export const signupSchema = z.object({
   email: emailSchema,
   password: passwordSchema,
+  // Optional referral code captured from ?ref= query param.
+  ref_code: z
+    .string()
+    .regex(/^[A-Z2-9]{8}$/)
+    .optional(),
 });
 
 export const loginSchema = z.object({

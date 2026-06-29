@@ -11,7 +11,8 @@ export type FeatureKey =
   | "battlecards"
   | "apiAccess"
   | "dailyBriefing"
-  | "realTimeAlerts";
+  | "realTimeAlerts"
+  | "referrals";
 
 export type PlanCapabilities = {
   // Whether the plan grants active service (false during cancelled/expired).
@@ -26,6 +27,7 @@ const NO_FEATURES: Record<FeatureKey, boolean> = {
   apiAccess: false,
   dailyBriefing: false,
   realTimeAlerts: false,
+  referrals: false,
 };
 
 // Per-paid-plan feature matrix from §10.2. Competitor limits come from PLANS so
@@ -37,6 +39,7 @@ const PAID_FEATURES: Record<PaidPlan, Record<FeatureKey, boolean>> = {
     whiteLabel: true,
     customSenderDomain: true,
     realTimeAlerts: true,
+    referrals: true,
   },
   pro: {
     whiteLabel: true,
@@ -45,6 +48,7 @@ const PAID_FEATURES: Record<PaidPlan, Record<FeatureKey, boolean>> = {
     battlecards: true,
     apiAccess: true,
     dailyBriefing: true,
+    referrals: true,
   },
 };
 

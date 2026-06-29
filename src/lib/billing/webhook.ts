@@ -11,6 +11,7 @@ import {
   subscriptionCancelledSubject,
 } from "./billingEmail";
 import { planFromStripePriceId } from "./plans";
+import { convertReferral } from "../referrals/queries";
 
 // Idempotent Stripe webhook processing.
 // Source: docs/inteloop-prd.md §10.5 (event → action table) and §21.5
@@ -89,6 +90,10 @@ async function onCheckoutCompleted(event: Stripe.Event, deps: StripeWebhookDeps)
       subscribed_at: new Date().toISOString(),
     })
     .eq("id", userId);
+
+  // Non-fatal: convert any pending referral for this user.
+  await convertReferral(userId).catch(() => {});
+
   return `checkout completed → plan=${plan ?? "(unchanged)"}`;
 }
 

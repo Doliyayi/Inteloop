@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 
 import { notifyN8nUserConfirmed } from "@/lib/integrations/n8n";
+import { linkReferral } from "@/lib/referrals/queries";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export async function GET(request: NextRequest) {
@@ -36,6 +37,14 @@ export async function GET(request: NextRequest) {
         created_at: data.user.created_at,
       },
     });
+
+    // Link referral if the user signed up via a referral link.
+    const refCode = data.user.user_metadata?.ref_code;
+    if (typeof refCode === "string" && refCode) {
+      await linkReferral(data.user.id, refCode).catch(() => {
+        // Non-fatal: referral attribution failure must not block the signup flow.
+      });
+    }
   }
 
   return NextResponse.redirect(new URL(next, url.origin));
